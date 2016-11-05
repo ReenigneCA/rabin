@@ -1,5 +1,9 @@
 # rabin cryptosystem for testing 8 bit AVR key exchange library
 #Rabin Cryptosystem with BigNumber library slightly modified from repo created by Sriharsha Gangam
+#compiling
+
+g++ -lcrypto
+the above works for me. The original version recommended gcc -lssl which did not work for me for the original version switching to -lcrypto did though this may vary by linux distribution. My intention is to use C++ as I alter the code though the original was pure C.
 
 #Introduction
 
