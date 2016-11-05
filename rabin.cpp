@@ -7,7 +7,11 @@
  * @author sgangam <Sriharsha Gangam>
  *
  * Compiling instructions:
- * gcc rabin.c -lssl
+ * ./build.sh 
+ * 
+ * or
+ * 
+ * gcc rabin.cpp -lcrypto
  *
  * Execution:
  * ./a.out
