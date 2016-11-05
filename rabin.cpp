@@ -1,7 +1,7 @@
 /**
  * @author WDavidO <David Oldford> - Nothing hard just refactoring for my needs
  * My changelog:
- *  04-11-2016 change to c++ basic layout of object for conversion from large main function 
+ *  04-11-2016 change to c++ basic layout of object for conversion from large main function
  *
  *
  * @author sgangam <Sriharsha Gangam>
@@ -15,7 +15,7 @@
  * The Rabin Cryptosystem: http://en.wikipedia.org/wiki/Rabin_cryptosystem
  *
  * Quoting the wikipedia article as of June 17 2014.
- * 
+ *
  * "The Rabin cryptosystem is an asymmetric cryptographic technique, whose
  * security, like that of RSA, is related to the difficulty of factorization.
  * However the Rabin cryptosystem has the advantage that the problem on which
@@ -26,13 +26,13 @@
  * required on decryption to identify which of the four possible inputs was the
  * true plaintext."
  *
- * 
+ *
  */
 //#include "rabin.h"
 #include <stdint.h>
 #include<openssl/bn.h>
 
-
+//TODO look at the BN_*_MPI functions
 void print_BN_DEC(BIGNUM * a){
 printf((BN_bn2dec(a)));
 
@@ -55,7 +55,7 @@ void extended_GCD(BIGNUM *x, BIGNUM *y,BIGNUM *gcd,BIGNUM *a,BIGNUM *b)//ax+by=g
 	BN_copy(a1,a);BN_copy(b1,b);
 	BN_set_word(x1,0);BN_set_word(x,1);
         BN_set_word(y1,1);BN_set_word(y,0);
-	
+
 	while(!BN_is_zero(b1))
 	{
 		BN_copy(temp,b1);
@@ -102,12 +102,12 @@ int main()
         BN_generate_prime(q,512,1,add,rem,NULL,NULL);
         printf("prime q=3 mod 4=  ");
         BN_print_fp(stdout,q);printf("\n");
-	
+
 	BN_mul(n,p,q,ctx);
 	printf("n=pq= ");
         BN_print_fp(stdout,n);printf("\n");
 
-// READ THE VALUE OF B AND X FROM THE USER.	
+// READ THE VALUE OF B AND X FROM THE USER.
 
 	char B_srt[100];
 	char x_srt[500];
@@ -124,13 +124,13 @@ int main()
 	printf("x= ");BN_print_fp(stdout,x);printf("\n");
         printf("B= ");BN_print_fp(stdout,B);printf("\n");
 	BN_mod_add(y,x,B,n,ctx);
-	BN_mod_mul(y,x,y,n,ctx);	
+	BN_mod_mul(y,x,y,n,ctx);
         printf("Encrypted message y=x(x+B) mod n = ");BN_print_fp(stdout,y);printf("\n");
 	printf("***********************************************************\n");
 
 //DECRYPT THE MESSAGE
 	//y=x(x+B)mod n, put x=x1-B/2 , then x1^2 = y1 = y + (B^2)/4
-	//so we solve for 4x= B^2 mod n to evaluate B^2/4.	
+	//so we solve for 4x= B^2 mod n to evaluate B^2/4.
 	// the solution is B^2/d * x , where d=gcd(4,n) and x is the x of extended euclid.
 
 	BIGNUM *y1,*x1, *ex, *ey , *gcd,*b,*B2b4,*rem1;
@@ -142,16 +142,16 @@ int main()
 	gcd=BN_new();
 	b=BN_new();
 	B2b4=BN_new();
-	rem1=BN_new();	
+	rem1=BN_new();
 
 	BN_set_word(b,4);
 	extended_GCD(ex,ey,gcd,n,b);
-        
+
         BN_mul(B2b4,ey,B,ctx);
         BN_mul(B2b4,B2b4,B,ctx);
         BN_div(B2b4,rem1 ,B2b4,gcd,ctx);
-	
-	BN_mod_add(y1,y,B2b4,n,ctx);	
+
+	BN_mod_add(y1,y,B2b4,n,ctx);
 
 
 	//printf("y1= ");BN_print_fp(stdout,y1);printf("\n");
@@ -170,7 +170,7 @@ int main()
 	cons=BN_new();
 
 	BN_set_word(cons,1);
-	BN_add(p1,p,cons);	
+	BN_add(p1,p,cons);
 	BN_add(q1,q,cons);
 	BN_set_word(cons,4);
 	BN_div(p1,rem1,p1,cons,ctx);
@@ -187,11 +187,11 @@ int main()
 
         //printf("yp= ");BN_print_fp(stdout,yp);printf("\n");
         //printf("yq= ");BN_print_fp(stdout,yq);printf("\n");
-	
+
 	BIGNUM *t1,*t2;
 	t1=BN_new();
 	t2=BN_new();
-	
+
 	BN_mod_mul(t1,p,yp,n,ctx);
         BN_mod_mul(t1,t1,mq,n,ctx);
 
@@ -228,12 +228,10 @@ int main()
         printf("s= "); print_BN_DEC(s) ;printf("\n");
         printf("s1= "); print_BN_DEC(s1) ;printf("\n");
 
-	
+
 	//BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();
 //BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();
 
-	
+
 	return 0;
 }
-
-
