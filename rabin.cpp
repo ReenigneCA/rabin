@@ -34,9 +34,9 @@
  */
 //#include "rabin.h"
 #include <stdint.h>
-#include<openssl/bn.h>
+#include<openssl/bn.h> 
 
-//TODO look at the BN_*_MPI functions
+//TODO look at the BN_*_MPI functions yarg kdevelop is really annoying me...
 void print_BN_DEC(BIGNUM * a){
 printf((BN_bn2dec(a)));
 
