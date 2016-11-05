@@ -1,4 +1,9 @@
 /**
+ * @author WDavidO <David Oldford> - Nothing hard just refactoring for my needs
+ * My changelog:
+ *  04-11-2016 change to c++ basic layout of object for conversion from large main function 
+ *
+ *
  * @author sgangam <Sriharsha Gangam>
  *
  * Compiling instructions:
@@ -24,8 +29,11 @@
  * 
  */
 
-#include<stdio.h>
+#include <stdint.h>
 #include<openssl/bn.h>
+
+
+
 
         BN_CTX *ctx;
 
