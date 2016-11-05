@@ -33,7 +33,7 @@
 #include<openssl/bn.h>
 
 
-void print_fp(BIGNUM * a){
+void print_BN_DEC(BIGNUM * a){
 printf((BN_bn2dec(a)));
 
 }
@@ -223,10 +223,10 @@ int main()
 
 
 	printf("The original message is one of the following:\n");
-	printf("r= "); print_fp(r) ;printf("\n");
-        printf("r1= "); print_fp(r1) ;printf("\n");
-        printf("s= "); print_fp(s) ;printf("\n");
-        printf("s1= "); print_fp(s1) ;printf("\n");
+	printf("r= "); print_BN_DEC(r) ;printf("\n");
+        printf("r1= "); print_BN_DEC(r1) ;printf("\n");
+        printf("s= "); print_BN_DEC(s) ;printf("\n");
+        printf("s1= "); print_BN_DEC(s1) ;printf("\n");
 
 	
 	//BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();
