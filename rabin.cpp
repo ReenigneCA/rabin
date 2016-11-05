@@ -28,7 +28,7 @@
  *
  * 
  */
-
+#include "rabin.h"
 #include <stdint.h>
 #include<openssl/bn.h>
 
