@@ -28,12 +28,15 @@
  *
  * 
  */
-#include "rabin.h"
+//#include "rabin.h"
 #include <stdint.h>
 #include<openssl/bn.h>
 
 
+void print_fp(BIGNUM * a){
+printf((BN_bn2dec(a)));
 
+}
 
         BN_CTX *ctx;
 
@@ -93,10 +96,10 @@ int main()
 	rem=BN_new();
 	BN_set_word(add,4);
 	BN_set_word(rem,3);
-	BN_generate_prime(p,80,1,add,rem,NULL,NULL);
+	BN_generate_prime(p,512,1,add,rem,NULL,NULL);
 	printf("prime p=3 mod 4=  ");
 	BN_print_fp(stdout,p);printf("\n");
-        BN_generate_prime(q,80,1,add,rem,NULL,NULL);
+        BN_generate_prime(q,512,1,add,rem,NULL,NULL);
         printf("prime q=3 mod 4=  ");
         BN_print_fp(stdout,q);printf("\n");
 	
@@ -107,7 +110,7 @@ int main()
 // READ THE VALUE OF B AND X FROM THE USER.	
 
 	char B_srt[100];
-	char x_srt[100];
+	char x_srt[500];
 	printf("Enter the value of B (decimal number)::");
 	scanf("%s",B_srt);
 
@@ -220,10 +223,10 @@ int main()
 
 
 	printf("The original message is one of the following:\n");
-	printf("r= "); BN_print_fp(stdout,r) ;printf("\n");
-        printf("r1= "); BN_print_fp(stdout,r1) ;printf("\n");
-        printf("s= "); BN_print_fp(stdout,s) ;printf("\n");
-        printf("s1= "); BN_print_fp(stdout,s1) ;printf("\n");
+	printf("r= "); print_fp(r) ;printf("\n");
+        printf("r1= "); print_fp(r1) ;printf("\n");
+        printf("s= "); print_fp(s) ;printf("\n");
+        printf("s1= "); print_fp(s1) ;printf("\n");
 
 	
 	//BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();BN_free();
