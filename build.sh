@@ -1,1 +1,1 @@
-gcc ./rabin.cpp -lcrypto -o rabin -O3
+g++ ./Rabin1024.cpp -lcrypto -o ./build/rabin -O3
