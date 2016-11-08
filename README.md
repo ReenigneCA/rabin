@@ -3,7 +3,7 @@
 #compiling
 
 g++ -lcrypto
-the above works for me. The original version recommended gcc -lssl which did not work for me for the original version switching to -lcrypto did though this may vary by linux distribution. My intention is to use C++ as I alter the code though the original was pure C.
+the above works for me. The original version recommended -lssl which did not work for me for the original version switching to -lcrypto did though this may vary by linux distribution.
 
 #Introduction
 

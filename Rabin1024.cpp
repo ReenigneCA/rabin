@@ -5,6 +5,10 @@
  *  06-11-2016 started wrapping everyting into an object. Extracted key generation portion
  *                     wrote random number seeding code and called it liberally wrote a quick test
  *                     function on top of the regular main function.
+ * 07-11-2016 Did a little minor cleanup and wrote the encryption code. I diverged from the
+ *                    Original as I don't desire a blinding factor for my purposes. This should simplify
+ *                    the decryption code greatly but also means I'll be using the Original code as a 
+ *                    loose guide only and will have to refer to generic descriptions of the algorithm.
  *
  *
  * @author sgangam <Sriharsha Gangam>
@@ -14,7 +18,7 @@
  * 
  * or
  * 
- * gcc rabin.cpp -lcrypto
+ * g++ rabin.cpp -lcrypto
  *
  * Execution:
  * ./a.out
@@ -55,17 +59,20 @@ void Rabin1024::commonConstruct(){
 
 void Rabin1024::seedRandom(){
      int retTester=0;
-    int randBytesNeeded = 32;
-     char randbuf[32];
+    int randBytesNeeded = 64;//decided to play it safe as we are generating 64 byte primes
+    //BN uses urandom vs random if it needs to (and if it's available on the OS,) so we
+    //could end up with a reduced search space that could be exploited though 
+    //anyone who figured it out would probably deserve the private key for their efforts :)
+     char randbuf[64];
 do{
 while(randBytesNeeded > 0){
-    retTester = getrandom(randbuf+32-randBytesNeeded,randBytesNeeded,GRND_RANDOM);
+    retTester = getrandom(randbuf+64-randBytesNeeded,randBytesNeeded,GRND_RANDOM);
     assert(retTester != -1);
     randBytesNeeded -= retTester;
     if(randBytesNeeded > 0)   
         sleep(1);
 }
-RAND_seed(randbuf,32);    
+RAND_seed(randbuf,64);    
 }while(RAND_status() == 0);
 }
 
@@ -140,11 +147,37 @@ int8_t Rabin1024::decrypt(buffer1024 * cipherText, buffer1024 * arrayOf4Solution
         return -1;
     //TODO
     return 1;
+   if(p == NULL || q == NULL || n == NULL)
+       return -1;
+    
+    buffer1024 buf;
+     for(uint8_t c=0; c<128;c++){
+        buf.values[c] = cipherText->values[127-c];//BN library is all big endian but my arduino code is little endian
+    }
+    BIGNUM * ct = BN_new();
+    BN_bin2bn(buf.values,sizeof(buf.values),ct);
+    //The code below uses a blinding factor B which seems to complicate things greatly and I don't desire a blinding factor
+   //for my particular use... I will likely use the extended euclidean algorithm and use other descriptions of rabin in conjunction
+   //with the code in the main function to stumble through this but not tonight :)
 }
 int8_t  Rabin1024::encrypt(buffer1024 * plainText, buffer1024* cipherText){
     if(n == NULL)
         return -1;
-    //TODO
+    BIGNUM * pt,* ct;
+    buffer1024 buf;
+    
+    pt = BN_new();
+    ct = BN_new();
+    BN_bin2bn(plainText->values,sizeof(plainText->values),pt);
+    BN_mod_mul(ct,pt,pt,n,ctx);// y = x*x mod n using ctx for temp memory
+    assert(BN_num_bytes(ct) == sizeof(ct->values));
+    BN_bn2bin(ct,buf.values);
+    for(uint8_t c=0; c<128;c++){
+        cipherText->values[c] = buf.values[127-c];//BN library is all big endian but my arduino code is little endian
+                                                                                //so I'll have to convert back at the beginning of the decryption code
+    }
+    BN_free(pt);
+    BN_free(ct);
     
     return 1;
 }
@@ -215,6 +248,8 @@ int main()
 {
 	Rabin1024 gusTheTestRabin;
     gusTheTestRabin.printDecData();
+    buffer1024 plainText;
+    printf("%i",sizeof(plainText.values));
     return 0;
     
     BIGNUM *p, *q, *n, *B,*x,*y, *add,*rem;
@@ -258,10 +293,12 @@ int main()
 	BN_dec2bn(&B,B_srt);
 
 	printf("**********************************************************\n");
-	printf("x= ");BN_print_fp(stdout,x);printf("\n");
+	
+    //this is encryption with blinding factor
+    printf("x= ");BN_print_fp(stdout,x);printf("\n");
         printf("B= ");BN_print_fp(stdout,B);printf("\n");
-	BN_mod_add(y,x,B,n,ctx);
-	BN_mod_mul(y,x,y,n,ctx);
+	BN_mod_add(y,x,B,n,ctx);// y + x+B mod n using ctx for temp memory
+	BN_mod_mul(y,x,y,n,ctx);// y = x*y mod n using ctx for temp memory
         printf("Encrypted message y=x(x+B) mod n = ");BN_print_fp(stdout,y);printf("\n");
 	printf("***********************************************************\n");
 
