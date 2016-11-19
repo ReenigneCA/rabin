@@ -14,111 +14,15 @@
  *                    code. Now just need a bit of cleanup and some serialization code and the prototype is
  *                    ready. Then turn it into a library add windows getrandom and profit!  
  *
- * extended_GCD function from: sgangam <Sriharsha Gangam>
- *
- * Compiling instructions:
- * ./build.sh
- *
- * or
- *
- * g++ rabin.cpp -lcrypto
- *
- * Execution:
- * ./a.out
- *
- *
  *
  */
-#include "Rabin1024.h"
+#include "rabin1024.h"
 #include <openssl/rand.h>
 #include <assert.h>
 #include <unistd.h>
-#if defined __gnu_linux__ || defined TARGET__OS_MAC
-#include <linux/random.h>
-#include <syscall.h>
-#include <iostream>
-#include <string.h>
+#include "rabintools.h"
 
-#define getrandom(a,b,c) syscall(SYS_getrandom,a,b,c)
-#elif
-//TODO need to define a crypto secure getrandom function for windows
-#endif
-
-extern "C" void extended_GCD(const BIGNUM *a,const BIGNUM *b,BIGNUM *gcd,BIGNUM *x,BIGNUM *y, BN_CTX *ctx)//ax+by=gcd
-{
-
-    BIGNUM *x1,*y1,*div,*rem, *temp, *a1,*b1;
-    x1=BN_new();
-    y1=BN_new();
-    div=BN_new();
-    rem=BN_new();
-    temp=BN_new();
-    a1=BN_new();
-    b1=BN_new();
-
-    BN_copy(a1,a);
-    BN_copy(b1,b);
-    BN_set_word(x1,0);
-    BN_set_word(x,1);
-    BN_set_word(y1,1);
-    BN_set_word(y,0);
-
-    while(!BN_is_zero(b1))
-    {
-        BN_copy(temp,b1);
-        BN_div(div,rem,a1,b1,ctx);
-        BN_copy(b1,rem);
-        BN_copy(a1,temp);
-
-        BN_copy(temp,x1);
-        BN_mul(x1,x1,div,ctx);
-        BN_sub(x1,x,x1);
-        BN_copy(x,temp);
-
-        BN_copy(temp,y1);
-        BN_mul(y1,y1,div,ctx);
-        BN_sub(y1,y,y1);
-        BN_copy(y,temp);
-    }
-    BN_copy(gcd,a1);
-    BN_free(x1);
-    BN_free(y1);
-    BN_free(a1);
-    BN_free(b1);
-    BN_free(temp);
-    BN_free(div);
-    BN_free(rem);
-}
-
-void buffer1024::fromBN(const BIGNUM* src){
-    uint32_t len = BN_num_bytes(src);
-    if( len == 0){
-        memset(values,0,sizeof(values));
-        return;
-    }
-    uint8_t buf[128];
-    if(len < 128) memset(buf,0,sizeof(buf));
-    BN_bn2bin(src,buf+128-len);
-    for(uint8_t c=0; c<128; c++) {
-        values[c] = buf[127-c];
-    }
-}
-
-void buffer1024::toBN(BIGNUM *dest) const{
-    uint8_t buf[128];
-    for(uint8_t c=0; c<128; c++) {
-        buf[c] = values[127-c];
-    }
-    BN_bin2bn(buf,sizeof(buf),dest); 
-}
-
-
-//TODO look at the BN_*_MPI functions yarg kdevelop is really annoying me...
-void print_BN_DEC(BIGNUM * a) {
-    printf("%s",(BN_bn2dec(a)));
-
-}
-
+#define DEBUG
 
 void Rabin1024::commonConstruct() {
     m_a = m_b = NULL;
@@ -145,7 +49,11 @@ void Rabin1024::seedRandom() {
     char randbuf[64];
     do {
         while(randBytesNeeded > 0) {
-            retTester = getrandom(randbuf+64-randBytesNeeded,randBytesNeeded,GRND_RANDOM);
+#ifndef DEBUG
+            retTester = Rabin1024_getrandom(randbuf+64-randBytesNeeded,randBytesNeeded,GRND_RANDOM);
+#else
+            retTester = Rabin1024_getrandom(randbuf+64-randBytesNeeded,randBytesNeeded,0);
+#endif
             assert(retTester != -1);
             randBytesNeeded -= retTester;
             if(randBytesNeeded > 0)
@@ -185,11 +93,9 @@ void Rabin1024::generatePrimes() {
 //n and still have a bit set in the highest byte
     do {
         genPrime(m_p);
-        std::cout << BN_num_bits(m_p) << "\n";
     } while(BN_num_bits(m_p) < 509);
     do {
         genPrime(m_q);
-        std::cout << BN_num_bits(m_q) << "\n";
     } while(BN_cmp(m_p,m_q) == 0 || BN_num_bits(m_q) < 508);
 
     BN_mul(m_n,m_p,m_q,m_ctx);
@@ -263,7 +169,7 @@ Rabin1024::Rabin1024() { //no key data so we'll generate them
     generatePrimes();
 
 }
-int8_t Rabin1024::decrypt(const buffer1024 &cipherText, buffer1024  (&arrayOf4Solutions)[4]) {
+int8_t Rabin1024::decryptEx(const Buffer1024 &cipherText, Buffer1024  (&arrayOf4Solutions)[4]) {
     if(m_p == NULL || m_q == NULL)
         return -1;
     if(m_a == NULL || m_b == NULL)
@@ -309,6 +215,9 @@ int8_t Rabin1024::decrypt(const buffer1024 &cipherText, buffer1024  (&arrayOf4So
 
     arrayOf4Solutions[0].fromBN(x);
     arrayOf4Solutions[1].fromBN(y);
+    //printf("possible values:");
+    //print_BN_DEC(x);
+    //print_BN_DEC(y);
     BN_copy(pExp,x);
     BN_copy(qExp,y);
 
@@ -317,6 +226,8 @@ int8_t Rabin1024::decrypt(const buffer1024 &cipherText, buffer1024  (&arrayOf4So
     BN_mod_sub(y, m_n, qExp, m_n, m_ctx);
     arrayOf4Solutions[2].fromBN(x);
     arrayOf4Solutions[3].fromBN(y);
+    //print_BN_DEC(x);
+    //print_BN_DEC(y);
     BN_free(x);
     BN_free(y);
     BN_free(r);
@@ -327,28 +238,62 @@ int8_t Rabin1024::decrypt(const buffer1024 &cipherText, buffer1024  (&arrayOf4So
     
     
 }
-int8_t  Rabin1024::encrypt(const buffer1024 &plainText, buffer1024 &cipherText) {
+
+int8_t Rabin1024::decrypt(const Buffer1024 &cipherText, uint8_t (&plainText)[4][127]){
+    Buffer1024 buf[4];
+    int retVal = decryptEx(cipherText,buf);
+    for(int i=0; i < 4; i++)
+        for(int c=0;c<127;c++)
+            plainText[i][c] = buf[i].values[c];
+    return retVal;
+    
+}
+
+
+int8_t  Rabin1024::encryptEx(const Buffer1024 &plainText, Buffer1024 &cipherText) {
     if(m_n == NULL)
         return -1;
     BIGNUM * pt,* ct;
-    memset(cipherText.values,0,sizeof(cipherText.values));
+    cipherText.clear();
+    
     
 
     pt = BN_new();
     ct = BN_new();
     plainText.toBN(pt);
+    if(BN_cmp(pt,m_n) != -1)
+        return -2;//plaintext must be smaller than n (m_n)
+    //printf("n:");
+    //print_BN_DEC(m_n);
+    
+    
+    //printf("pt:");
+    //print_BN_DEC(pt);
+    
     BN_mod_sqr(ct,pt,m_n,m_ctx);// y = x*x mod n using ctx for temp memory
     assert(BN_num_bytes(ct) <= sizeof(cipherText.values));
     cipherText.fromBN(ct);
-    std::cout << "\nencryption done value:";
-    print_BN_DEC(ct);
-    std::cout << "\n";
-    
-    
+
+    //printf("ct:");
+    //print_BN_DEC(ct);
     BN_free(pt);
     BN_free(ct);
 
     return 1;
+}
+
+int8_t Rabin1024::encrypt(const uint8_t (&plainText)[127], Buffer1024 &cipherText){
+    Buffer1024 buf, n;
+    Rabin1024_getrandom(buf.values+127,1,0);
+    if(buf.values[127] == 0) buf.values[127] += 1;
+    for(int c=0; c<127; c++)
+        buf.values[c] = plainText[c];
+    n.fromBN(m_n);
+    while(buf.compare(n) != -1) {
+        assert(buf.values[127] > 0);
+        buf.values[127] = buf.values[127] >> 1;
+    }
+    return encryptEx(buf, cipherText);
 }
 
 
@@ -371,28 +316,3 @@ void Rabin1024::printDecData() {
 
 
 
-//This file generates two primes and encrypts a given message.
-int main()
-{
-    uint32_t i, j;
-
-    std::cin >> i;
-    std::cout << i << "\n";
-
-    Rabin1024 gusTheTestRabin;
-    gusTheTestRabin.printDecData();
-    buffer1024 plainText;
-    buffer1024 cipherText;
-    memset(plainText.values,0,sizeof(plainText.values));
-    plainText.values[0] = ((char*)&i)[0];
-    plainText.values[1] = ((char*)&i)[1];
-    plainText.values[2] = ((char*)&i)[2];
-    plainText.values[3] = ((char*)&i)[3];
-
-    gusTheTestRabin.encrypt(plainText, cipherText);
-    buffer1024 results[4];
-    gusTheTestRabin.decrypt(cipherText,results);
-    return 0;
-
-
-}

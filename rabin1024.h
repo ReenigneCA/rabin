@@ -1,15 +1,9 @@
 #pragma once
+#include "buffer1024.h"
 #include <openssl/bn.h>
 #include <stdint.h>
+#include <string.h>
 
-extern "C" void extended_GCD(const BIGNUM *x, const BIGNUM *y, BIGNUM *gcd,BIGNUM *a,BIGNUM *b, BN_CTX *ctx);//ax+by=gcd
-
-struct buffer1024 {
-public:
-    uint8_t values[128];
-    void toBN(BIGNUM * dest) const;
-    void fromBN(const BIGNUM * src);
-};
 
 class Rabin1024 {
 private:
@@ -28,9 +22,14 @@ public:
     Rabin1024();//no key data so we'll generate them
     ~Rabin1024();
     //returns 1 for success negative error code otherwise
-    int8_t decrypt(const buffer1024 &cipherText, buffer1024 (&arrayOf4Solutions)[4]);
+    int8_t decryptEx(const Buffer1024 &cipherText, Buffer1024 (&arrayOf4Solutions)[4]);
+    int8_t decrypt(const Buffer1024 &cipherText, uint8_t (&plainText)[4][127]);
     //returns 1 for success negative error code otherwise
-    int8_t encrypt(const buffer1024 &plainText, buffer1024 &cipherText);
+    //plainText must be smaller than n (m_n) which you can get with getN
+    int8_t encryptEx(const Buffer1024 &plainText, Buffer1024 &cipherText);
+    //plainText will be padded to 128 bytes properly WRT n (m_n)
+    int8_t encrypt(const uint8_t (&plainText)[127], Buffer1024 &cipherText);
     void printDecData();
+    void getN(Buffer1024 &dest){ dest.fromBN(m_n);}
 };
 
