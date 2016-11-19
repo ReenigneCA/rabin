@@ -249,6 +249,21 @@ int8_t Rabin1024::decrypt(const Buffer1024 &cipherText, uint8_t (&plainText)[4][
     
 }
 
+int8_t Rabin1024::decryptPat(const Buffer1024 &cipherText, uint8_t &numPossible,uint8_t (&plainText)[4][112]){
+    const char * pattern = "123456789abcdef";
+    uint8_t buf[4][127];
+    int retVal = decrypt(cipherText,buf);
+    numPossible = 0;
+    for(int c=0; c<4;c++){
+        if(strncmp(pattern,(char *)buf[c],15) == 0){
+            for(int j=15;j<127;j++)
+                plainText[numPossible][j-15] = buf[c][j];
+            numPossible += 1;
+        }
+        
+    }
+    return retVal;
+}
 
 int8_t  Rabin1024::encryptEx(const Buffer1024 &plainText, Buffer1024 &cipherText) {
     if(m_n == NULL)
@@ -296,6 +311,17 @@ int8_t Rabin1024::encrypt(const uint8_t (&plainText)[127], Buffer1024 &cipherTex
     return encryptEx(buf, cipherText);
 }
 
+int8_t Rabin1024::encryptPat(const uint8_t (&plainText)[112], Buffer1024 &cipherText){
+    uint8_t buf[127];
+    const char * pattern = "123456789abcdef";
+    for(int c=0;c<15;c++)
+        buf[c] = pattern[c];
+    for(int c=15;c<127;c++)
+        buf[c] = plainText[c-15];
+    return encrypt(buf,cipherText);
+    
+    
+}
 
 void Rabin1024::printDecData() {
     print_BN_DEC(m_p);
