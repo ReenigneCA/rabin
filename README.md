@@ -1,6 +1,10 @@
 # rabin cryptosystem for testing 8 bit AVR key exchange library
-#Rabin Cryptosystem with BigNumber library slightly modified from repo created by Sriharsha Gangam
+#Rabin Cryptosystem with BigNumber library slightly inspired by rabin repo by Sriharsha Gangam
 #compiling
+
+Note I have removed all code from the repos I originally forked and rewritten everything from scratch. This was originally mostly out of convenience as the original
+repos used a blinding factor that was unnecessary for me but I have since not been able to contact the author of the original repos to request permission to release
+my repos under the GPLv3 so I'm cutting out the last of his code (extended GCD function) and replacing it with code I've written myself. 
 
 g++ ./main.cpp ./rabin1024.cpp ./buffer1024.cpp ./rabintools.cpp -lcrypto
 the above works for me. The original version recommended -lssl which did not work for me for the original version switching to -lcrypto did though this may vary by linux distribution.

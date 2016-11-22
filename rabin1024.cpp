@@ -9,10 +9,13 @@
  *                    Original as I don't desire a blinding factor for my purposes. This should simplify
  *                    the decryption code greatly but also means I'll be using the Original code as a
  *                    loose guide only and will have to refer to generic descriptions of the algorithm.
- *  18-11-2016 used the extended_GCD from teh original along with the description of rabin from
+ *  18-11-2016 used the extended_GCD from the original along with the description of rabin from
  *                    https://programmingpraxis.com/2011/11/22/rabins-cryptosystem/ to write the decryption 
  *                    code. Now just need a bit of cleanup and some serialization code and the prototype is
  *                    ready. Then turn it into a library add windows getrandom and profit!  
+ *  22-11-2016 Wasn't able to get a hold of the author of the original library to ask permission to release
+ *                    this one under the GPLv3 so I've cut out the last of his original code and will be
+ *                    rewriting the extended_GCD from scratch.
  *
  *
  */

@@ -18,6 +18,5 @@ int Rabin1024_getrandom(void* buffer,uint b,uint c);
 #define GRND_RANDOM 1
 int Rabin1024_getrandom(void* buffer,uint b,uint c);
 #endif
-
-extern "C" void extended_GCD(const BIGNUM *x, const BIGNUM *y, BIGNUM *gcd,BIGNUM *a,BIGNUM *b, BN_CTX *ctx);//ax+by=gcd
+extern "C" void extendedGCDCoPrime(const BIGNUM *a, const BIGNUM *b, BIGNUM * x, BIGNUM * y, BN_CTX *ctx);
 void print_BN_DEC(BIGNUM * a);
