@@ -2,6 +2,9 @@
 #Rabin Cryptosystem with BigNumber library slightly inspired by rabin repo by Sriharsha Gangam
 #compiling
 
+As of 22 Nov 2016 all code in this repository was writtn personally by myself and I release it all under the GPLv3
+
+
 Note I have removed all code from the repos I originally forked and rewritten everything from scratch. This was originally mostly out of convenience as the original
 repos used a blinding factor that was unnecessary for me but I have since not been able to contact the author of the original repos to request permission to release
 my repos under the GPLv3 so I'm cutting out the last of his code (extended GCD function) and replacing it with code I've written myself. 

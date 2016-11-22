@@ -1,4 +1,6 @@
-/**
+/*
+ * licensed under the GPL version 3 see license.txt
+ * 
  * @author WDavidO <David Oldford> - 
  * My changelog:
  *  04-11-2016 change to c++ basic layout of object for conversion from large main function
@@ -35,12 +37,9 @@ void Rabin1024::commonConstruct() {
 }
 
 void Rabin1024::calculateAB() {
-    BIGNUM * gcd;
-    gcd = BN_new();
     m_a = BN_new();
     m_b = BN_new();
-    extended_GCD(m_p, m_q,gcd, m_a, m_b, m_ctx);
-    BN_free(gcd);
+    extendedGCDCoPrime(m_p, m_q, m_a, m_b, m_ctx);
 }
 
 void Rabin1024::seedRandom() {
@@ -172,7 +171,7 @@ Rabin1024::Rabin1024() { //no key data so we'll generate them
     generatePrimes();
 
 }
-int8_t Rabin1024::decryptEx(const Buffer1024 &cipherText, Buffer1024  (&arrayOf4Solutions)[4]) {
+int8_t Rabin1024::decryptBuffer(const Buffer1024 &cipherText, Buffer1024  (&arrayOf4Solutions)[4]) {
     if(m_p == NULL || m_q == NULL)
         return -1;
     if(m_a == NULL || m_b == NULL)
@@ -238,13 +237,13 @@ int8_t Rabin1024::decryptEx(const Buffer1024 &cipherText, Buffer1024  (&arrayOf4
     BN_free(pExp);
     BN_free(qExp);
     
-    
+    return 1;
     
 }
 
 int8_t Rabin1024::decrypt(const Buffer1024 &cipherText, uint8_t (&plainText)[4][127]){
     Buffer1024 buf[4];
-    int retVal = decryptEx(cipherText,buf);
+    int retVal = decryptBuffer(cipherText,buf);
     for(int i=0; i < 4; i++)
         for(int c=0;c<127;c++)
             plainText[i][c] = buf[i].values[c];
@@ -252,11 +251,11 @@ int8_t Rabin1024::decrypt(const Buffer1024 &cipherText, uint8_t (&plainText)[4][
     
 }
 
-int8_t Rabin1024::decryptPat(const Buffer1024 &cipherText, uint8_t &numPossible,uint8_t (&plainText)[4][112]){
+int8_t Rabin1024::decryptPat(const Buffer1024 &cipherText, uint8_t (&plainText)[4][112]){
     const char * pattern = "123456789abcdef";
     uint8_t buf[4][127];
     int retVal = decrypt(cipherText,buf);
-    numPossible = 0;
+    uint8_t numPossible = 0;
     for(int c=0; c<4;c++){
         if(strncmp(pattern,(char *)buf[c],15) == 0){
             for(int j=15;j<127;j++)
@@ -265,10 +264,13 @@ int8_t Rabin1024::decryptPat(const Buffer1024 &cipherText, uint8_t &numPossible,
         }
         
     }
+    if(retVal > 0)
+        return numPossible;
+    
     return retVal;
 }
 
-int8_t  Rabin1024::encryptEx(const Buffer1024 &plainText, Buffer1024 &cipherText) {
+int8_t  Rabin1024::encryptBuffer(const Buffer1024 &plainText, Buffer1024 &cipherText) {
     if(m_n == NULL)
         return -1;
     BIGNUM * pt,* ct;
@@ -311,7 +313,7 @@ int8_t Rabin1024::encrypt(const uint8_t (&plainText)[127], Buffer1024 &cipherTex
         assert(buf.values[127] > 0);
         buf.values[127] = buf.values[127] >> 1;
     }
-    return encryptEx(buf, cipherText);
+    return encryptBuffer(buf, cipherText);
 }
 
 int8_t Rabin1024::encryptPat(const uint8_t (&plainText)[112], Buffer1024 &cipherText){
@@ -336,10 +338,70 @@ void Rabin1024::printDecData() {
 
 }
 
+extern "C" void * Rabin1024Create(uint8_t * keyString){
+    Rabin1024 * rabin1024;
+    if(keyString == NULL){
+        rabin1024= new Rabin1024();
+        return rabin1024;
+    }
+    
+    return NULL;
+    //TODO
+    
+};
+
+extern "C" void Rabin1024DestroyRabin1024(void * Rabin){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    if (rabin != NULL)
+        delete rabin;
+};
 
 
+//return a pointer to a buffer containing a string that 
+//represents the current key (may include public or public and private key information)
+//if includeAandB is true these interim values will be included in the string
+//to save on calculating them when the string is loaded later
+extern "C" uint8_t * Rabin1024GetKeyString(void * Rabin, bool includeAandB){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    return NULL;
+    //TODO
+};
 
+//returns 1 on success negative error codes on failure
+extern "C" int8_t Rabin1024EncryptPat(void * Rabin, const uint8_t (&plainText)[112], uint8_t (&cipherText)[128]){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    Buffer1024 buf;
+    uint8_t retVal = rabin->encryptPat(plainText,buf);
+    memcpy(cipherText, buf.values,sizeof(buf.values));
+    return retVal;
+};
 
+//returns 1 on success negative error codes on failure
+extern "C" int8_t Rabin1024Encrypt(void * Rabin, const uint8_t (&plainText)[127], uint8_t (&cipherText)[128]){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    Buffer1024 buf;
+    uint8_t retVal = rabin->encrypt(plainText,buf);
+    memcpy(cipherText, buf.values,sizeof(buf.values));
+    return retVal;
+};
+
+//returns the number of possible decryptions or a negative error code. Will almost always
+//return only a single possible decryption.
+extern "C" int8_t Rabin1024DecryptPat(void * Rabin, const uint8_t (&cipherText)[128],uint8_t (&plainText)[4][112]){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    Buffer1024 ct;
+    memcpy(ct.values, cipherText,sizeof(ct.values));//yeah this is inefficient but likely meaningless
+    return rabin->decryptPat(ct,plainText);
+};
+
+//returns the number of possible decryptions or a negative error code. Will almost always
+//return only a single possible decryption.
+extern "C" int8_t Rabin1024Decrypt(void * Rabin, const uint8_t (&cipherText)[128],uint8_t (&plainText)[4][127]){
+    Rabin1024 * rabin = (Rabin1024*)Rabin;
+    Buffer1024 ct;
+    memcpy(ct.values, cipherText,sizeof(ct.values));//yeah this is inefficient but likely meaningless
+    return rabin->decrypt(ct,plainText);
+};
 
 
 

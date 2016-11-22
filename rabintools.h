@@ -1,3 +1,6 @@
+/*
+ * licensed under the GPL version 3 see license.txt
+ */
 #pragma once
 #include <openssl/bn.h>
 
@@ -18,5 +21,5 @@ int Rabin1024_getrandom(void* buffer,uint b,uint c);
 #define GRND_RANDOM 1
 int Rabin1024_getrandom(void* buffer,uint b,uint c);
 #endif
-extern "C" void extendedGCDCoPrime(const BIGNUM *a, const BIGNUM *b, BIGNUM * x, BIGNUM * y, BN_CTX *ctx);
+extern "C" void extendedGCDCoPrime(const BIGNUM *a, const BIGNUM *b, BIGNUM * x, BIGNUM * y, BN_CTX *ctx, BIGNUM *gcd=NULL);
 void print_BN_DEC(BIGNUM * a);

@@ -1,3 +1,6 @@
+/*
+ * licensed under the GPL version 3 see license.txt
+ */
 #include "rabin1024.h"
 #include <iostream>
 #include <string.h>
@@ -6,6 +9,21 @@
 
 int main()
 {
+//     BIGNUM * a, *b,*x,*y;
+//     BN_CTX * ctx;
+//     ctx=BN_CTX_new();
+//     
+//     a = BN_new();
+//     b = BN_new();
+//     x = BN_new();
+//     y = BN_new();
+//     BN_set_word(a,17);
+//     BN_set_word(b,7);
+//     extendedGCDCoPrime(a,b,x,y,ctx);
+//     print_BN_DEC(x);
+//     print_BN_DEC(y);
+//     
+//     return 0;
     Rabin1024 *gusTheTestRabin;
     //gusTheTestRabin.printDecData();
     uint8_t plainText[112];
@@ -24,8 +42,8 @@ int main()
             resultsWorked = false;
             Rabin1024_getrandom(plainText,112,0);
             gusTheTestRabin->encryptPat(plainText, cipherText);
-            gusTheTestRabin->decryptPat(cipherText,numPossible,results);
-            assert(numPossible != 0);
+            numPossible = gusTheTestRabin->decryptPat(cipherText,results);
+            assert(numPossible > 0);
             if(numPossible > 1){
                 std::cout << "\nWow this is unlikely enter a number to continue\n";
                 std::cin >> pauseint;

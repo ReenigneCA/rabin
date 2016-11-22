@@ -1,6 +1,9 @@
 #include "buffer1024.h"
 #include "rabintools.h"
 #include <assert.h>
+/*
+ * licensed under the GPL version 3 see license.txt
+ */
 
 void Buffer1024::fromBN(const BIGNUM* src){
     uint32_t len = BN_num_bytes(src);

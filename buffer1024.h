@@ -1,3 +1,7 @@
+/*
+ * licensed under the GPL version 3 see license.txt
+ */
+
 #pragma once
 #include <openssl/bn.h>
 #include <stdint.h>
